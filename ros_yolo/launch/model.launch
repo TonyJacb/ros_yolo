@@ -1,0 +1,10 @@
+<launch>
+    <rosparam file="$(find ros_yolo)/param/param.yaml" />
+    <node name="yolo_node" 
+            pkg="ros_yolo" 
+            type="detect.py"  
+            output="screen">
+    </node>
+
+    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find ros_yolo)/rviz/config.rviz" />
+</launch>
