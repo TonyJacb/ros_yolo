@@ -35,15 +35,15 @@ class YOLOv5:
         self.device=rospy.get_param("device", "")  # cuda device, i.e. 0 or 0,1,2,3 or cpu
         
         self.agnostic_nms=rospy.get_param("agnostic_nms", False)  # class-agnostic NMS
-        self.augment=True  # augmented inference
-        self.visualize=False  # visualize features
-        self.update=False  # update all models
-        self.line_thickness=3  # bounding box thickness (pixels)
-        self.hide_labels=False  # hide labels
-        self.hide_conf=False  # hide confidences
-        self.half=False  # use FP16 half-precision inference
-        self.dnn=False  # use OpenCV DNN for ONNX inference
-        self.vid_stride=1  # video frame-rate stride
+        self.augment=rospy.get_param("augment", True ) # augmented inference
+        self.visualize=rospy.get_param("visualize",False)  # visualize features
+        self.update=rospy.get_param("update", False)  # update all models
+        self.line_thickness=rospy.get_param("line_thickness",3)  # bounding box thickness (pixels)
+        self.hide_labels=rospy.get_param("hide_labels",False)  # hide labels
+        self.hide_conf=rospy.get_param("hide_conf",False)  # hide confidences
+        self.half=rospy.get_param("half",False)  # use FP16 half-precision inference
+        self.dnn=rospy.get_param("dnn",False)  # use OpenCV DNN for ONNX inference
+        self.vid_stride=rospy.get_param("vid_stride",1)  # video frame-rate stride
 
         # Load model
         self.device = select_device(self.device)
