@@ -17,8 +17,13 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 class YOLOv5:
     def __init__(self) -> None:
-        self.pub_topic = rospy.get_param("output_image", "/yolo/image_raw")
-        self.pubimage = rospy.Publisher(self.pub_topic, Image, queue_size=1)
+        self.pub_yolo_topic = rospy.get_param("yolo_output_image", "/yolo/image_raw")
+        self.pub_yolo_image = rospy.Publisher(self.pub_yolo_topic, Image, queue_size=1)
+        
+        self.pub_raw_topic = rospy.get_param("raw_output_image", "/usb_cam/image_raw")
+        self.pub_raw_image = rospy.Publisher(self.pub_raw_topic, Image, queue_size=1)
+        
+        
         check_requirements(exclude=('tensorboard', 'thop'))
 
         self.bridge = CvBridge()
@@ -108,6 +113,12 @@ class YOLOv5:
                     s += f'{i}: '
                 else:
                     p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
+                
+                #Stream raw image
+                rawimg = im0
+                rawimg = self.bridge.cv2_to_imgmsg(rawimg)
+                rawimg.header.stamp = rospy.Time.now()
+                self.pub_raw_image.publish(rawimg)
 
                 s += '%gx%g ' % im.shape[2:]  # print string
                 gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
@@ -127,11 +138,11 @@ class YOLOv5:
                         label = None if self.hide_labels else (names[c] if self.hide_conf else f'{names[c]} {conf:.2f}')
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
-                # Stream results
-                im0 = annotator.result()
-                img = self.bridge.cv2_to_imgmsg(im0)
-                img.header.stamp = rospy.Time.now()
-                self.pubimage.publish(img)
+                # Stream detection image
+                yoloimg = annotator.result()
+                yoloimg = self.bridge.cv2_to_imgmsg(yoloimg)
+                yoloimg.header.stamp = rospy.Time.now()
+                self.pub_yolo_image.publish(yoloimg)
 
 if __name__ == "__main__":
     rospy.init_node("yolo_node")

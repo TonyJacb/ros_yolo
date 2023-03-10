@@ -1,6 +1,7 @@
 
 #Topics
-output_image: "/yolo/image_raw"
+yolo_output_image: "/yolo/image_raw"
+raw_output_image: "/usb_cam/image_raw"
 
 #Paths
 source: 0 # file/dir/URL/glob/screen/0(webcam)
