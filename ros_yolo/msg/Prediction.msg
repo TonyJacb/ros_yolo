@@ -1,0 +1,7 @@
+int32 number_of_detection
+std_msgs/Float64MultiArray xmin
+std_msgs/Float64MultiArray ymin
+std_msgs/Float64MultiArray xmax
+std_msgs/Float64MultiArray ymax
+std_msgs/Float64MultiArray confidence
+std_msgs/Float64MultiArray classes

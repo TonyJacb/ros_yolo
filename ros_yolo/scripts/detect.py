@@ -3,6 +3,8 @@
 from pathlib import Path
 import rospy
 from sensor_msgs.msg import Image
+from std_msgs.msg import Float64MultiArray
+from ros_yolo.msg import Prediction 
 
 import torch
 from cv_bridge import CvBridge
@@ -17,13 +19,15 @@ from utils.torch_utils import select_device, smart_inference_mode
 
 class YOLOv5:
     def __init__(self) -> None:
-        self.pub_yolo_topic = rospy.get_param("yolo_output_image", "/yolo/image_raw")
-        self.pub_yolo_image = rospy.Publisher(self.pub_yolo_topic, Image, queue_size=1)
+        self.yolo_topic = rospy.get_param("yolo_output_image", "/yolo/image_raw")
+        self.pub_yolo_image = rospy.Publisher(self.yolo_topic, Image, queue_size=1)
         
-        self.pub_raw_topic = rospy.get_param("raw_output_image", "/usb_cam/image_raw")
-        self.pub_raw_image = rospy.Publisher(self.pub_raw_topic, Image, queue_size=1)
+        self.raw_topic = rospy.get_param("raw_output_image", "/usb_cam/image_raw")
+        self.pub_raw_image = rospy.Publisher(self.raw_topic, Image, queue_size=1)
         
-        
+        self.yolo_pred_topic = rospy.get_param("yolo_prediction", "/yolo/prediction")
+        self.pub_yolo_pred = rospy.Publisher(self.yolo_pred_topic, Prediction, queue_size=1)
+
         check_requirements(exclude=('tensorboard', 'thop'))
 
         self.bridge = CvBridge()
@@ -107,6 +111,7 @@ class YOLOv5:
 
             # Process predictions
             for i, det in enumerate(pred):  # per image
+                
                 seen += 1
                 if webcam:  # batch_size >= 1
                     p, im0, frame = path[i], im0s[i].copy(), dataset.count
@@ -123,14 +128,29 @@ class YOLOv5:
                 s += '%gx%g ' % im.shape[2:]  # print string
                 gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
                 annotator = Annotator(im0, line_width=self.line_thickness, example=str(names))
+                pred = Prediction()
                 if len(det):
                     # Rescale boxes from img_size to im0 size
                     det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
+                    predList = det[:,:6].tolist()
 
-                    # Print results
-                    for c in det[:, 5].unique():
-                        n = (det[:, 5] == c).sum()  # detections per class
-                        s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                    num = len(det)
+                    xmin = det[:,0].tolist()
+                    ymin = det[:,1].tolist()
+                    xmax = det[:,2].tolist()
+                    ymax = det[:,3].tolist()
+                    confidence = det[:,4].tolist()
+                    clas = det[:,5].tolist() 
+
+                    pred.number_of_detection = num
+                    pred.xmin.data = xmin
+                    pred.ymin.data = ymin
+                    pred.xmax.data = xmax
+                    pred.ymax.data = ymax
+                    pred.confidence.data = confidence
+                    pred.classes.data = clas
+
+                    self.pub_yolo_pred.publish(pred)
 
                     # Write results
                     for *xyxy, conf, cls in reversed(det):

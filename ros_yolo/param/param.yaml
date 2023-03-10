@@ -2,7 +2,7 @@
 #Topics
 yolo_output_image: "/yolo/image_raw"
 raw_output_image: "/usb_cam/image_raw"
-
+yolo_prediction: "/yolo/prediction"
 #Paths
 source: 0 # file/dir/URL/glob/screen/0(webcam)
 weights: "yolov5s.pt"  # model path or triton URL   
